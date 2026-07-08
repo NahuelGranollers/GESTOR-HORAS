@@ -1,0 +1,6 @@
+{
+  "name": "Horas Pro V6",
+  "description": "Gestor de horas de trabajo y cálculo de horas extras con estilo iOS Dark Mode.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
