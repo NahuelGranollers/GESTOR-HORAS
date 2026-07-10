@@ -142,40 +142,68 @@ export default function ConfigView({
       {/* Grid sections */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Section: Default Shift */}
-        <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-3xl p-6 space-y-4 shadow-sm">
-          <h4 className="text-[#8E8E93] text-xs font-bold uppercase tracking-widest border-b border-[#2C2C2E] pb-3 mb-3">
-            Horario Habitual (Predeterminados)
+        <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-2xl p-4 space-y-3 shadow-sm">
+          <h4 className="text-[#8E8E93] text-[11px] font-bold uppercase tracking-widest border-b border-[#2C2C2E] pb-2 mb-2">
+            Horario Habitual (Turno Mañana)
           </h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-[#8E8E93] uppercase">Entrada 2</label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-[#8E8E93] uppercase">Entrada Mañana</label>
+              <input
+                type="time"
+                value={entradaDefault}
+                onChange={(e) => setEntradaDefault(e.target.value)}
+                className="bg-[#2C2C2E] border-none rounded-xl p-2.5 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-[#FF9F0A] transition-all"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-[#8E8E93] uppercase">Salida Mañana</label>
+              <input
+                type="time"
+                value={salidaDefault}
+                onChange={(e) => setSalidaDefault(e.target.value)}
+                className="bg-[#2C2C2E] border-none rounded-xl p-2.5 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-[#FF9F0A] transition-all"
+              />
+            </div>
+          </div>
+
+          <h4 className="text-[#8E8E93] text-[11px] font-bold uppercase tracking-widest border-b border-[#2C2C2E] pt-2 pb-2 mb-2">
+            Turno Tarde (Opcional / Partido)
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-[#8E8E93] uppercase">Entrada Tarde</label>
               <input
                 type="time"
                 value={entrada2Default}
                 onChange={(e) => setEntrada2Default(e.target.value)}
-                className="bg-[#2C2C2E] border-none rounded-xl p-4 text-base font-bold text-white outline-none focus:ring-2 focus:ring-[#FF9F0A] transition-all"
+                className="bg-[#2C2C2E] border-none rounded-xl p-2.5 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-[#FF9F0A] transition-all"
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-[#8E8E93] uppercase">Salida 2</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-[#8E8E93] uppercase">Salida Tarde</label>
               <input
                 type="time"
                 value={salida2Default}
                 onChange={(e) => setSalida2Default(e.target.value)}
-                className="bg-[#2C2C2E] border-none rounded-xl p-4 text-base font-bold text-white outline-none focus:ring-2 focus:ring-[#FF9F0A] transition-all"
+                className="bg-[#2C2C2E] border-none rounded-xl p-2.5 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-[#FF9F0A] transition-all"
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-[#8E8E93] uppercase">Objetivo Día (h)</label>
+
+          <h4 className="text-[#8E8E93] text-[11px] font-bold uppercase tracking-widest border-b border-[#2C2C2E] pt-2 pb-2 mb-2">
+            Objetivo Diario
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-[#8E8E93] uppercase">Objetivo Día (h)</label>
               <input
                 type="number"
                 step="0.5"
                 min="1"
                 value={jornadaDiaria}
                 onChange={(e) => setJornadaDiaria(parseFloat(e.target.value) || 0)}
-                className="bg-[#2C2C2E] border-none rounded-xl p-4 text-base font-bold text-white outline-none focus:ring-2 focus:ring-[#FF9F0A] transition-all"
+                className="bg-[#2C2C2E] border-none rounded-xl p-2.5 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-[#FF9F0A] transition-all"
               />
             </div>
           </div>

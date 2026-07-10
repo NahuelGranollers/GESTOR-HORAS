@@ -13,7 +13,7 @@ import {
   Trash2,
   FileText,
   Clock
-} from 'lucide-react';
+, ChevronRight} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Custom Components
@@ -60,6 +60,7 @@ export default function App() {
   const [quickEntrada, setQuickEntrada] = useState(config.horario.entradaDefault);
   const [quickEntrada2, setQuickEntrada2] = useState(config.horario.entrada2Default || '');
   const [quickSalida2, setQuickSalida2] = useState(config.horario.salida2Default || '');
+  const [quickNotas, setQuickNotas] = useState('');
   const [quickSalida, setQuickSalida] = useState(config.horario.salidaDefault);
   const [quickNextDay, setQuickNextDay] = useState(false);
   const [confirmClearMonth, setConfirmClearMonth] = useState(false);
@@ -126,7 +127,9 @@ export default function App() {
     if (shift && shift.entrada && shift.salida) {
       setQuickEntrada(shift.entrada);
       setQuickSalida(shift.salida);
+      setQuickNotas(shift.notas || '');
     } else {
+      setQuickNotas('');
       setQuickEntrada(config.horario.entradaDefault);
     setQuickEntrada2(config.horario.entrada2Default || '');
     setQuickSalida2(config.horario.salida2Default || '');
@@ -227,9 +230,8 @@ export default function App() {
       ...shift,
       entrada: quickEntrada,
       salida: quickSalida,
-      entrada2: quickEntrada2,
-      salida2: quickSalida2,
       nextDay: quickNextDay,
+      notas: quickNotas,
     });
   };
 
@@ -306,44 +308,64 @@ export default function App() {
         
         // removed options
         return (
-          <div className="space-y-6 pb-24">
+          <div className="space-y-4 pb-16">
             
-            <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-[32px] p-6 shadow-sm overflow-hidden relative">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-white text-xl font-bold uppercase tracking-widest">{monthNames[month]} {year}</h2>
+            <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-2xl p-4 sm:p-5 shadow-sm overflow-hidden relative">
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-white text-xs font-black uppercase tracking-wider">{monthNames[month]} {year}</h2>
               </div>
-              <div className="flex justify-between items-end relative z-10 pb-4">
+              <div className="flex justify-between items-end relative z-10 pb-2">
                 <div className="flex flex-col">
-                  <span className="text-[#8E8E93] text-[10px] font-bold uppercase tracking-wider">Bolsa</span>
-                  <span className="text-[#0A84FF] text-3xl font-black">+{formatHours(totalBolsa)}</span>
+                  <span className="text-[#8E8E93] text-[9px] font-bold uppercase tracking-wider">Bolsa</span>
+                  <span className="text-[#0A84FF] text-xl font-black">+{formatHours(totalBolsa)}</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <span className="text-[#8E8E93] text-[10px] font-bold uppercase tracking-wider">Cobrar</span>
-                  <span className="text-[#30D158] text-3xl font-black">{totalDinero.toFixed(0)}<span className="text-lg">€</span></span>
+                  <span className="text-[#8E8E93] text-[9px] font-bold uppercase tracking-wider">Cobrar</span>
+                  <span className="text-[#30D158] text-xl font-black">{totalDinero.toFixed(0)}<span className="text-sm">€</span></span>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="text-[#8E8E93] text-[10px] font-bold uppercase tracking-wider">A Deber</span>
-                  <span className="text-[#FF453A] text-3xl font-black">-{formatHours(totalDeber)}</span>
+                  <span className="text-[#8E8E93] text-[9px] font-bold uppercase tracking-wider">A Deber</span>
+                  <span className="text-[#FF453A] text-xl font-black">-{formatHours(totalDeber)}</span>
                 </div>
               </div>
             </div>
 
-            <div className="mx-2 bg-[#0A0A0A] rounded-[32px] p-6 sm:p-8 border border-[#2C2C2E] shadow-2xl relative z-20 -mt-12">
-              <div className="flex justify-between items-center mb-8">
+            <div className="mx-2 bg-[#0A0A0A] rounded-[24px] p-4 sm:p-5 border border-[#2C2C2E] shadow-xl relative z-20 -mt-8">
+              <div className="flex justify-between items-center mb-4">
                 <div>
-                  <span className="text-[#8E8E93] text-xs font-bold uppercase tracking-wider block mb-1">
+                  <span className="text-[#8E8E93] text-[10px] font-bold uppercase tracking-wider block mb-0.5">
                     {isSelectedMonthToday && selectedDay === todayDay ? 'Hoy' : 'Día seleccionado'}
                   </span>
-                  <h3 className="text-white font-bold text-xl tracking-tight">
+                  <h3 className="text-white font-bold text-base tracking-tight flex items-center gap-1.5">
                     {dayNamesFull[selDayOfWeek]}, {selectedDay}
+                    <div className="flex bg-[#1C1C1E] rounded-lg overflow-hidden border border-[#2C2C2E] ml-1.5">
+                      <button 
+                        onClick={() => {
+                          const prevDate = new Date(year, month, selectedDay - 1);
+                          if (prevDate.getMonth() === month) setSelectedDay(selectedDay - 1);
+                        }} 
+                        className="px-1.5 py-0.5 hover:bg-[#2C2C2E] transition-colors border-r border-[#2C2C2E]"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5 text-[#8E8E93] rotate-180" />
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const nextDate = new Date(year, month, selectedDay + 1);
+                          if (nextDate.getMonth() === month) setSelectedDay(selectedDay + 1);
+                        }} 
+                        className="px-1.5 py-0.5 hover:bg-[#2C2C2E] transition-colors"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5 text-[#8E8E93]" />
+                      </button>
+                    </div>
                   </h3>
                   {currentMonthData[selectedDay]?.notas && (
-                    <span className="text-[#FF9F0A] text-sm font-medium mt-1 block flex items-center gap-1">
+                    <span className="text-[#FF9F0A] text-xs font-medium mt-0.5 block flex items-center gap-1">
                       📍 {currentMonthData[selectedDay].notas}
                     </span>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                   <button
                     onClick={() => {
                       const prevDate = new Date(year, month, selectedDay - 1);
@@ -361,40 +383,40 @@ export default function App() {
                         alert('No hay registro del día anterior.');
                       }
                     }}
-                    className="bg-[#2C2C2E] text-white px-4 py-2.5 rounded-2xl text-xs font-bold hover:bg-[#3A3A3C] transition-colors"
+                    className="bg-[#2C2C2E] text-white px-2.5 py-1.5 rounded-xl text-[10px] font-bold hover:bg-[#3A3A3C] transition-colors"
                   >
                     Repetir ayer
                   </button>
                   <button
                     onClick={() => handleOpenEditDay(selectedDay)}
-                    className="bg-[#2C2C2E] text-white p-2.5 rounded-2xl hover:bg-[#3A3A3C] transition-colors"
+                    className="bg-[#2C2C2E] text-white p-1.5 rounded-xl hover:bg-[#3A3A3C] transition-colors"
                   >
-                    <Settings className="w-5 h-5" />
+                    <Settings className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              <div className="flex gap-4 mb-8">
-                <div className="flex-1 bg-[#1C1C1E] p-4 rounded-3xl border border-[#2C2C2E] flex flex-col relative group">
-                  <label className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-wider block mb-2 flex items-center gap-1.5">
+              <div className="flex gap-3 mb-4">
+                <div className="flex-1 bg-[#1C1C1E] p-2.5 rounded-xl border border-[#2C2C2E] flex flex-col relative group">
+                  <label className="text-[9px] text-[#8E8E93] font-bold uppercase tracking-wider block mb-1 flex items-center gap-1">
                     <Clock className="w-3 h-3" /> Entrada
                   </label>
                   <input
                     type="time" 
                     value={quickEntrada}
                     onChange={(e) => setQuickEntrada(e.target.value)}
-                    className="w-full bg-transparent text-white text-xl font-black outline-none border-none p-0 focus:ring-0 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full" 
+                    className="w-full bg-transparent text-white text-base font-bold outline-none border-none p-0 focus:ring-0 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full" 
                   />
                 </div>
                 
-                <div className="flex-1 bg-[#1C1C1E] p-4 rounded-3xl border border-[#2C2C2E] flex flex-col relative group">
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <div className="flex-1 bg-[#1C1C1E] p-2.5 rounded-xl border border-[#2C2C2E] flex flex-col relative group">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-[9px] text-[#8E8E93] font-bold uppercase tracking-wider flex items-center gap-1">
                       <Clock className="w-3 h-3" /> Salida
                     </label>
                     <button 
                       onClick={() => setQuickNextDay(!quickNextDay)}
-                      className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-colors ${quickNextDay ? 'bg-[#BF5AF2] text-white' : 'bg-[#2C2C2E] text-[#8E8E93]'}`}
+                      className={`text-[8px] font-bold px-1.5 py-0.5 rounded transition-colors ${quickNextDay ? 'bg-[#BF5AF2] text-white' : 'bg-[#2C2C2E] text-[#8E8E93]'}`}
                     >
                       +1 Día
                     </button>
@@ -403,51 +425,72 @@ export default function App() {
                     type="time" 
                     value={quickSalida}
                     onChange={(e) => setQuickSalida(e.target.value)}
-                    className="w-full bg-transparent text-white text-xl font-black outline-none border-none p-0 focus:ring-0 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full" 
+                    className="w-full bg-transparent text-white text-base font-bold outline-none border-none p-0 focus:ring-0 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full" 
                   />
                 </div>
               </div>
 
+              <div className="bg-[#1C1C1E] p-2.5 rounded-xl border border-[#2C2C2E] flex flex-col relative group mb-4">
+                <label className="text-[9px] text-[#8E8E93] font-bold uppercase tracking-wider block mb-1">
+                  Notas / Lugar
+                </label>
+                <input
+                  type="text" 
+                  value={quickNotas}
+                  onChange={(e) => setQuickNotas(e.target.value)}
+                  placeholder="Ej: Oficina central, remoto..."
+                  className="w-full bg-transparent text-white text-xs outline-none border-none p-0 focus:ring-0 placeholder-[#8E8E93]/40" 
+                />
+              </div>
+
               <button 
                 onClick={handleSaveQuickEntry}
-                className="w-full bg-white text-black font-black py-3 rounded-2xl text-lg hover:bg-gray-200 transition-colors shadow-lg shadow-white/10 active:scale-[0.98]"
+                className="w-full bg-white text-black font-black py-2 rounded-xl text-sm hover:bg-gray-200 transition-all shadow-md shadow-white/5 active:scale-[0.98]"
               >
                 Guardar Turno
               </button>
               
               {monthCalculations[selectedDay] && currentMonthData[selectedDay] && (
-                <div className="mt-8 pt-6 border-t border-[#2C2C2E] grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                <div className="mt-4 pt-3 border-t border-[#2C2C2E] grid grid-cols-2 gap-2 text-xs">
                   
                   {monthCalculations[selectedDay].total > 0 && (
-                    <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#30D158]/30">
-                      <span className="text-[#8E8E93] font-semibold text-xs uppercase tracking-wider">Laborables</span>
-                      <span className="text-[#30D158] font-black text-lg">
+                    <div className="flex justify-between items-center bg-[#1C1C1E] p-2 rounded-xl border border-white/10 col-span-2">
+                      <span className="text-[#8E8E93] font-semibold text-[10px] uppercase tracking-wider">Totales</span>
+                      <span className="text-white font-black text-sm">
+                        {formatHours(monthCalculations[selectedDay].total)}
+                      </span>
+                    </div>
+                  )}
+                  {monthCalculations[selectedDay].total > 0 && (
+                    <div className="flex justify-between items-center bg-[#1C1C1E] p-2 rounded-xl border border-[#30D158]/20">
+                      <span className="text-[#8E8E93] font-semibold text-[10px] uppercase tracking-wider">Laborables</span>
+                      <span className="text-[#30D158] font-black text-sm">
                         {formatHours(monthCalculations[selectedDay].total - monthCalculations[selectedDay].extDiur - monthCalculations[selectedDay].extNoct - monthCalculations[selectedDay].festivas)}
                       </span>
                     </div>
                   )}
                   {monthCalculations[selectedDay].extDiur > 0 && (
-                    <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#0A84FF]/30">
-                      <span className="text-[#8E8E93] font-semibold text-xs uppercase tracking-wider">Extra Laborable</span>
-                      <span className="text-[#0A84FF] font-black text-lg">{formatHours(monthCalculations[selectedDay].extDiur)}</span>
+                    <div className="flex justify-between items-center bg-[#1C1C1E] p-2 rounded-xl border border-[#0A84FF]/20">
+                      <span className="text-[#8E8E93] font-semibold text-[10px] uppercase tracking-wider">Extra Laborable</span>
+                      <span className="text-[#0A84FF] font-black text-sm">{formatHours(monthCalculations[selectedDay].extDiur)}</span>
                     </div>
                   )}
                   {monthCalculations[selectedDay].extNoct > 0 && (
-                    <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#BF5AF2]/30">
-                      <span className="text-[#8E8E93] font-semibold text-xs uppercase tracking-wider">Extra Nocturna</span>
-                      <span className="text-[#BF5AF2] font-black text-lg">{formatHours(monthCalculations[selectedDay].extNoct)}</span>
+                    <div className="flex justify-between items-center bg-[#1C1C1E] p-2 rounded-xl border border-[#BF5AF2]/20">
+                      <span className="text-[#8E8E93] font-semibold text-[10px] uppercase tracking-wider">Extra Nocturna</span>
+                      <span className="text-[#BF5AF2] font-black text-sm">{formatHours(monthCalculations[selectedDay].extNoct)}</span>
                     </div>
                   )}
                   {monthCalculations[selectedDay].deber > 0 && (
-                    <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#FF453A]/30">
-                      <span className="text-[#FF453A] font-semibold text-xs uppercase tracking-wider">Restada</span>
-                      <span className="text-[#FF453A] font-black text-lg">{formatHours(monthCalculations[selectedDay].deber)}</span>
+                    <div className="flex justify-between items-center bg-[#1C1C1E] p-2 rounded-xl border border-[#FF453A]/20">
+                      <span className="text-[#FF453A] font-semibold text-[10px] uppercase tracking-wider">Restada</span>
+                      <span className="text-[#FF453A] font-black text-sm">{formatHours(monthCalculations[selectedDay].deber)}</span>
                     </div>
                   )}
                   {monthCalculations[selectedDay].festivas > 0 && (
-                    <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#FF9F0A]/30">
-                      <span className="text-[#FF9F0A] font-semibold text-xs uppercase tracking-wider">Festiva</span>
-                      <span className="text-[#FF9F0A] font-black text-lg">{formatHours(monthCalculations[selectedDay].festivas)}</span>
+                    <div className="flex justify-between items-center bg-[#1C1C1E] p-2 rounded-xl border border-[#FF9F0A]/20">
+                      <span className="text-[#FF9F0A] font-semibold text-[10px] uppercase tracking-wider">Festiva</span>
+                      <span className="text-[#FF9F0A] font-black text-sm">{formatHours(monthCalculations[selectedDay].festivas)}</span>
                     </div>
                   )}
                 </div>
@@ -576,13 +619,21 @@ export default function App() {
             config={config}
             onSave={(day, newShift) => {
               handleSaveDayShift(day, newShift);
-              setIsEditOpen(false);
             }}
             onClear={(day) => {
               handleClearDayShift(day);
-              setIsEditOpen(false);
             }}
             onClose={() => setIsEditOpen(false)}
+            onPrevDay={() => {
+              if (editingDay > 1) {
+                setEditingDay(editingDay - 1);
+              }
+            }}
+            onNextDay={() => {
+              if (editingDay < daysInMonth) {
+                setEditingDay(editingDay + 1);
+              }
+            }}
           />
         )}
       </AnimatePresence>

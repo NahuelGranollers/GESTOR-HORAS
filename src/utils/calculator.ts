@@ -78,6 +78,18 @@ export function formatHours(decimalHours: number): string {
   return `${isNegative ? '-' : ''}${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}h`;
 }
 
+export function shiftSpansInterval(entrada: string, salida: string, nextDay: boolean, startHour: number, endHour: number): boolean {
+  if (!entrada || !salida) return false;
+  const e = parseTimeToMinutes(entrada);
+  let s = parseTimeToMinutes(salida);
+  if (nextDay || s < e) {
+    s += 1440;
+  }
+  const intStart = startHour * 60;
+  const intEnd = endHour * 60;
+  return e <= intStart && s >= intEnd;
+}
+
 const round2 = (num: number) => Math.round(num * 100) / 100;
 
 export function calculateDayShift(
@@ -112,8 +124,6 @@ export function calculateDayShift(
     s += 1440;
   }
 
-  
-  
   let rawNormalMins = 0;
   let rawExtraDayMins = 0;
   let rawExtraNightMins = 0;
@@ -145,6 +155,21 @@ export function calculateDayShift(
   let descansoMins = 0;
   if (shift.descanso !== undefined && shift.descanso > 0) {
     descansoMins = Math.round(shift.descanso * 60);
+  }
+
+  const isComidaActive = shift.comida !== undefined 
+    ? shift.comida 
+    : shiftSpansInterval(shift.entrada, shift.salida, shift.nextDay || false, 14, 15);
+     
+  const isCenaActive = shift.cena !== undefined 
+    ? shift.cena 
+    : shiftSpansInterval(shift.entrada, shift.salida, shift.nextDay || false, 21, 22);
+
+  if (isComidaActive) {
+    descansoMins += 60;
+  }
+  if (isCenaActive) {
+    descansoMins += 60;
   }
 
   let effNormalMins = rawNormalMins;
@@ -185,15 +210,9 @@ export function calculateDayShift(
     let extDiur = effExtraDayMins / 60;
     let extNoct = effExtraNightMins / 60;
 
-    if (normalHours > baseObjetivo) {
-      const overflow = normalHours - baseObjetivo;
-      extDiur += overflow;
-      normalHours = baseObjetivo;
-    }
-
+    result.deber = round2(Math.max(0, baseObjetivo - normalHours));
     result.extDiur = round2(extDiur);
     result.extNoct = round2(extNoct);
-    result.deber = round2(baseObjetivo - normalHours);
 
     if (shift.opcion === 'Cobrar') {
       result.dinero = round2((result.extDiur * config.tarifas.diurna) + (result.extNoct * config.tarifas.nocturna));

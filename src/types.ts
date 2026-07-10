@@ -37,6 +37,8 @@ export interface DayShift {
   festivo: boolean;
   opcion: 'Bolsa' | 'Cobrar';
   notas?: string;
+  comida?: boolean;
+  cena?: boolean;
 }
 
 export interface DayCalculation {

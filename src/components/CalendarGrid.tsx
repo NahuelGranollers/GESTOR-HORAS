@@ -52,33 +52,33 @@ export default function CalendarGrid({
   }
 
   return (
-    <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-3xl p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-white flex items-center gap-1">
+    <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-2xl p-4 sm:p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-bold text-white flex items-center gap-1">
           <span>{monthNames[month]}</span>
           <span className="text-[#8E8E93] font-normal">{year}</span>
         </h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button 
             onClick={onPrevMonth}
-            className="p-2 rounded-full border border-[#2C2C2E] bg-[#0A0A0A] hover:bg-[#2C2C2E] text-[#8E8E93] hover:text-white transition-colors"
+            className="p-1.5 rounded-full border border-[#2C2C2E] bg-[#0A0A0A] hover:bg-[#2C2C2E] text-[#8E8E93] hover:text-white transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
           <button 
             onClick={onNextMonth}
-            className="p-2 rounded-full border border-[#2C2C2E] bg-[#0A0A0A] hover:bg-[#2C2C2E] text-[#8E8E93] hover:text-white transition-colors"
+            className="p-1.5 rounded-full border border-[#2C2C2E] bg-[#0A0A0A] hover:bg-[#2C2C2E] text-[#8E8E93] hover:text-white transition-colors"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-y-4 gap-x-2 text-center mb-2">
+      <div className="grid grid-cols-7 gap-y-3 gap-x-1.5 text-center mb-1">
         {dayLabels.map((lbl, idx) => (
           <div 
             key={idx} 
-            className={`text-xs font-semibold ${
+            className={`text-[10px] font-bold uppercase tracking-wider ${
               idx >= 5 ? 'text-[#FF9F0A]' : 'text-[#8E8E93]'
             }`}
           >
@@ -136,22 +136,22 @@ export default function CalendarGrid({
               onClick={() => onSelectDay(day)}
               className={`aspect-square w-full rounded-full flex flex-col items-center justify-center transition-all relative ${statusColorClass}`}
             >
-              <span className={`text-[15px] z-10 ${textColor}`}>
+              <span className={`text-[13px] z-10 ${textColor}`}>
                 {day}
               </span>
               {dotColor && (
-                <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${dotColor}`} />
+                <span className={`absolute bottom-0.5 w-1 h-1 rounded-full ${dotColor}`} />
               )}
             </button>
           );
         })}
       </div>
       
-      <div className="mt-6 flex flex-wrap gap-4 justify-center">
-        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#30D158]"></span><span className="text-[10px] text-[#8E8E93] uppercase font-bold">Trabajado</span></div>
-        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#FF453A]"></span><span className="text-[10px] text-[#8E8E93] uppercase font-bold">Falta</span></div>
-        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#0A84FF]"></span><span className="text-[10px] text-[#8E8E93] uppercase font-bold">Extra</span></div>
-        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#FF9F0A]"></span><span className="text-[10px] text-[#8E8E93] uppercase font-bold">Festivo</span></div>
+      <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1.5 justify-center">
+        <div className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#30D158]"></span><span className="text-[9px] text-[#8E8E93] uppercase font-bold tracking-wider">Trabajado</span></div>
+        <div className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#FF453A]"></span><span className="text-[9px] text-[#8E8E93] uppercase font-bold tracking-wider">Falta</span></div>
+        <div className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#0A84FF]"></span><span className="text-[9px] text-[#8E8E93] uppercase font-bold tracking-wider">Extra</span></div>
+        <div className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#FF9F0A]"></span><span className="text-[9px] text-[#8E8E93] uppercase font-bold tracking-wider">Festivo</span></div>
       </div>
     </div>
   );
