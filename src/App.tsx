@@ -25,15 +25,7 @@ import BackupView from './components/BackupView';
 
 // Types & Helpers
 import { WorkConfig, DayShift, DayCalculation, MonthData, MonthCalculations } from './types';
-import { calculateDayShift, DEFAULT_CONFIG } from './utils/calculator';
-
-// Time options generator for dropdowns (15 min intervals)
-export const TIME_OPTIONS: string[] = [];
-for (let h = 0; h < 24; h++) {
-  for (let m = 0; m < 60; m += 15) {
-    TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-  }
-}
+import { calculateDayShift, formatHours, DEFAULT_CONFIG } from './utils/calculator';
 
 export default function App() {
   const monthNames = [
@@ -66,7 +58,10 @@ export default function App() {
   const [editingDay, setEditingDay] = useState(1);
 
   const [quickEntrada, setQuickEntrada] = useState(config.horario.entradaDefault);
+  const [quickEntrada2, setQuickEntrada2] = useState(config.horario.entrada2Default || '');
+  const [quickSalida2, setQuickSalida2] = useState(config.horario.salida2Default || '');
   const [quickSalida, setQuickSalida] = useState(config.horario.salidaDefault);
+  const [quickNextDay, setQuickNextDay] = useState(false);
   const [confirmClearMonth, setConfirmClearMonth] = useState(false);
 
   useEffect(() => {
@@ -133,6 +128,8 @@ export default function App() {
       setQuickSalida(shift.salida);
     } else {
       setQuickEntrada(config.horario.entradaDefault);
+    setQuickEntrada2(config.horario.entrada2Default || '');
+    setQuickSalida2(config.horario.salida2Default || '');
       setQuickSalida(config.horario.salidaDefault);
     }
   }, [selectedDay, monthKey, masterData, config]);
@@ -148,7 +145,7 @@ export default function App() {
     const shift = currentMonthData[d] || {
       entrada: '',
       salida: '',
-      descanso: config.horario.descansoDefault,
+      descanso: 0,
       ausencia: 0,
       festivo: isWeekend,
       opcion: 'Bolsa',
@@ -230,6 +227,9 @@ export default function App() {
       ...shift,
       entrada: quickEntrada,
       salida: quickSalida,
+      entrada2: quickEntrada2,
+      salida2: quickSalida2,
+      nextDay: quickNextDay,
     });
   };
 
@@ -304,10 +304,7 @@ export default function App() {
         const selDayOfWeek = selectedDateObj.getDay();
         const selIsWeekend = selDayOfWeek === 0 || selDayOfWeek === 6;
         
-        // Ensure options have current values even if not exactly 15m increment
-        const activeEntradaOptions = TIME_OPTIONS.includes(quickEntrada) ? TIME_OPTIONS : [...TIME_OPTIONS, quickEntrada].sort();
-        const activeSalidaOptions = TIME_OPTIONS.includes(quickSalida) ? TIME_OPTIONS : [...TIME_OPTIONS, quickSalida].sort();
-
+        // removed options
         return (
           <div className="space-y-6 pb-24">
             
@@ -318,7 +315,7 @@ export default function App() {
               <div className="flex justify-between items-end relative z-10 pb-4">
                 <div className="flex flex-col">
                   <span className="text-[#8E8E93] text-[10px] font-bold uppercase tracking-wider">Bolsa</span>
-                  <span className="text-[#0A84FF] text-3xl font-black">+{totalBolsa.toFixed(1)}<span className="text-lg">h</span></span>
+                  <span className="text-[#0A84FF] text-3xl font-black">+{formatHours(totalBolsa)}</span>
                 </div>
                 <div className="flex flex-col items-center">
                   <span className="text-[#8E8E93] text-[10px] font-bold uppercase tracking-wider">Cobrar</span>
@@ -326,7 +323,7 @@ export default function App() {
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="text-[#8E8E93] text-[10px] font-bold uppercase tracking-wider">A Deber</span>
-                  <span className="text-[#FF453A] text-3xl font-black">-{totalDeber.toFixed(1)}<span className="text-lg">h</span></span>
+                  <span className="text-[#FF453A] text-3xl font-black">-{formatHours(totalDeber)}</span>
                 </div>
               </div>
             </div>
@@ -337,7 +334,7 @@ export default function App() {
                   <span className="text-[#8E8E93] text-xs font-bold uppercase tracking-wider block mb-1">
                     {isSelectedMonthToday && selectedDay === todayDay ? 'Hoy' : 'Día seleccionado'}
                   </span>
-                  <h3 className="text-white font-bold text-2xl tracking-tight">
+                  <h3 className="text-white font-bold text-xl tracking-tight">
                     {dayNamesFull[selDayOfWeek]}, {selectedDay}
                   </h3>
                 </div>
@@ -377,73 +374,75 @@ export default function App() {
                   <label className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-wider block mb-2 flex items-center gap-1.5">
                     <Clock className="w-3 h-3" /> Entrada
                   </label>
-                  <select 
+                  <input
+                    type="time" 
                     value={quickEntrada}
                     onChange={(e) => setQuickEntrada(e.target.value)}
-                    className="w-full bg-transparent text-white text-3xl font-black outline-none border-none p-0 focus:ring-0 appearance-none cursor-pointer" 
-                  >
-                    {activeEntradaOptions.map(time => (
-                      <option key={time} value={time}>{time}</option>
-                    ))}
-                  </select>
+                    className="w-full bg-transparent text-white text-xl font-black outline-none border-none p-0 focus:ring-0 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full" 
+                  />
                 </div>
                 
                 <div className="flex-1 bg-[#1C1C1E] p-4 rounded-3xl border border-[#2C2C2E] flex flex-col relative group">
-                  <label className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-wider block mb-2 flex items-center gap-1.5">
-                    <Clock className="w-3 h-3" /> Salida
-                  </label>
-                  <select 
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <Clock className="w-3 h-3" /> Salida
+                    </label>
+                    <button 
+                      onClick={() => setQuickNextDay(!quickNextDay)}
+                      className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-colors ${quickNextDay ? 'bg-[#BF5AF2] text-white' : 'bg-[#2C2C2E] text-[#8E8E93]'}`}
+                    >
+                      +1 Día
+                    </button>
+                  </div>
+                  <input
+                    type="time" 
                     value={quickSalida}
                     onChange={(e) => setQuickSalida(e.target.value)}
-                    className="w-full bg-transparent text-white text-3xl font-black outline-none border-none p-0 focus:ring-0 appearance-none cursor-pointer" 
-                  >
-                    {activeSalidaOptions.map(time => (
-                      <option key={time} value={time}>{time}</option>
-                    ))}
-                  </select>
+                    className="w-full bg-transparent text-white text-xl font-black outline-none border-none p-0 focus:ring-0 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full" 
+                  />
                 </div>
               </div>
 
               <button 
                 onClick={handleSaveQuickEntry}
-                className="w-full bg-white text-black font-black py-4 rounded-2xl text-lg hover:bg-gray-200 transition-colors shadow-lg shadow-white/10 active:scale-[0.98]"
+                className="w-full bg-white text-black font-black py-3 rounded-2xl text-lg hover:bg-gray-200 transition-colors shadow-lg shadow-white/10 active:scale-[0.98]"
               >
                 Guardar Turno
               </button>
               
               {monthCalculations[selectedDay] && currentMonthData[selectedDay] && (
                 <div className="mt-8 pt-6 border-t border-[#2C2C2E] grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
-                  <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#2C2C2E]">
-                    <span className="text-[#8E8E93] font-semibold text-xs uppercase tracking-wider">Trabajadas</span>
-                    <span className="text-white font-black text-lg">{monthCalculations[selectedDay].total.toFixed(1)}h</span>
-                  </div>
-                  <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#2C2C2E]">
-                    <span className="text-[#8E8E93] font-semibold text-xs uppercase tracking-wider">Objetivo</span>
-                    <span className="text-white font-black text-lg">{(currentMonthData[selectedDay].festivo || selIsWeekend) ? 0 : config.jornadaDiariaObjetivo}h</span>
-                  </div>
                   
+                  {monthCalculations[selectedDay].total > 0 && (
+                    <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#30D158]/30">
+                      <span className="text-[#8E8E93] font-semibold text-xs uppercase tracking-wider">Laborables</span>
+                      <span className="text-[#30D158] font-black text-lg">
+                        {formatHours(monthCalculations[selectedDay].total - monthCalculations[selectedDay].extDiur - monthCalculations[selectedDay].extNoct - monthCalculations[selectedDay].festivas)}
+                      </span>
+                    </div>
+                  )}
                   {monthCalculations[selectedDay].extDiur > 0 && (
                     <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#0A84FF]/30">
-                      <span className="text-[#8E8E93] font-semibold text-xs uppercase tracking-wider">Ext. Diurna</span>
-                      <span className="text-[#0A84FF] font-black text-lg">{monthCalculations[selectedDay].extDiur.toFixed(1)}h</span>
+                      <span className="text-[#8E8E93] font-semibold text-xs uppercase tracking-wider">Extra Laborable</span>
+                      <span className="text-[#0A84FF] font-black text-lg">{formatHours(monthCalculations[selectedDay].extDiur)}</span>
                     </div>
                   )}
                   {monthCalculations[selectedDay].extNoct > 0 && (
                     <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#BF5AF2]/30">
-                      <span className="text-[#8E8E93] font-semibold text-xs uppercase tracking-wider">Nocturna</span>
-                      <span className="text-[#BF5AF2] font-black text-lg">{monthCalculations[selectedDay].extNoct.toFixed(1)}h</span>
+                      <span className="text-[#8E8E93] font-semibold text-xs uppercase tracking-wider">Extra Nocturna</span>
+                      <span className="text-[#BF5AF2] font-black text-lg">{formatHours(monthCalculations[selectedDay].extNoct)}</span>
                     </div>
                   )}
                   {monthCalculations[selectedDay].deber > 0 && (
                     <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#FF453A]/30">
-                      <span className="text-[#FF453A] font-semibold text-xs uppercase tracking-wider">Falta</span>
-                      <span className="text-[#FF453A] font-black text-lg">{monthCalculations[selectedDay].deber.toFixed(1)}h</span>
+                      <span className="text-[#FF453A] font-semibold text-xs uppercase tracking-wider">Restada</span>
+                      <span className="text-[#FF453A] font-black text-lg">{formatHours(monthCalculations[selectedDay].deber)}</span>
                     </div>
                   )}
                   {monthCalculations[selectedDay].festivas > 0 && (
                     <div className="flex justify-between items-center bg-[#1C1C1E] p-3 rounded-xl border border-[#FF9F0A]/30">
                       <span className="text-[#FF9F0A] font-semibold text-xs uppercase tracking-wider">Festiva</span>
-                      <span className="text-[#FF9F0A] font-black text-lg">{monthCalculations[selectedDay].festivas.toFixed(1)}h</span>
+                      <span className="text-[#FF9F0A] font-black text-lg">{formatHours(monthCalculations[selectedDay].festivas)}</span>
                     </div>
                   )}
                 </div>

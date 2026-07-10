@@ -5,10 +5,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { DayShift, WorkConfig } from '../types';
-import { calculateDayShift } from '../utils/calculator';
+import { calculateDayShift, formatHours } from '../utils/calculator';
 import { X, Trash2, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { TIME_OPTIONS } from '../App';
 
 interface EditSheetProps {
   isOpen: boolean;
@@ -44,24 +43,36 @@ export default function EditSheet({
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
   const [entrada, setEntrada] = useState('');
+    const [entrada2, setEntrada2] = useState('');
+  const [salida2, setSalida2] = useState('');
   const [salida, setSalida] = useState('');
+  const [nextDay, setNextDay] = useState(false);
   const [festivo, setFestivo] = useState(false);
   const [opcion, setOpcion] = useState<'Bolsa' | 'Cobrar'>('Bolsa');
   const [confirmClear, setConfirmClear] = useState(false);
+  const [notas, setNotas] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setConfirmClear(false);
       if (shift) {
-        setEntrada(shift.entrada || config.horario.entradaDefault);
-        setSalida(shift.salida || config.horario.salidaDefault);
+        setEntrada(shift.entrada ?? '');
+        setEntrada2(shift.entrada2 ?? '');
+        setSalida2(shift.salida2 ?? '');
+        setSalida(shift.salida ?? '');
+        setNextDay(shift.nextDay || false);
         setFestivo(shift.festivo);
         setOpcion(shift.opcion || 'Bolsa');
+        setNotas(shift.notas || '');
       } else {
         setEntrada(config.horario.entradaDefault);
+        setEntrada2(config.horario.entrada2Default || '');
+        setSalida2(config.horario.salida2Default || '');
         setSalida(config.horario.salidaDefault);
+        setNextDay(false);
         setFestivo(isWeekend);
         setOpcion('Bolsa');
+        setNotas('');
       }
     }
   }, [isOpen, day, month, year, shift, isWeekend, config]);
@@ -69,10 +80,14 @@ export default function EditSheet({
   const previewShift: DayShift = {
     entrada,
     salida,
+    entrada2,
+    salida2,
+    nextDay,
     descanso: shift?.descanso || 0,
     ausencia: 0,
     festivo,
     opcion,
+    notas,
   };
   const previewCalc = calculateDayShift(day, previewShift, config, isWeekend);
 
@@ -82,10 +97,14 @@ export default function EditSheet({
     onSave(day, {
       entrada,
       salida,
+      entrada2,
+      salida2,
+      nextDay,
       descanso: shift?.descanso || 0,
       ausencia: 0,
       festivo,
       opcion,
+      notas,
     });
     onClose();
   };
@@ -94,10 +113,6 @@ export default function EditSheet({
     onClear(day);
     onClose();
   };
-
-  // Ensure options include the current value even if it's not a round 15-min increment
-  const activeEntradaOptions = TIME_OPTIONS.includes(entrada) ? TIME_OPTIONS : [...TIME_OPTIONS, entrada].sort();
-  const activeSalidaOptions = TIME_OPTIONS.includes(salida) ? TIME_OPTIONS : [...TIME_OPTIONS, salida].sort();
 
   return (
     <AnimatePresence>
@@ -123,7 +138,7 @@ export default function EditSheet({
             <div className="px-6 pb-6 pt-2 flex items-center justify-between">
               <div>
                 <span className="text-[#0A84FF] text-xs font-bold uppercase tracking-widest block mb-1">Editor de Turno</span>
-                <h3 className="text-2xl font-bold tracking-tight text-white">
+                <h3 className="text-xl font-bold tracking-tight text-white">
                   {dayNames[dayOfWeek]}, {day} {monthNames[month]}
                 </h3>
               </div>
@@ -142,30 +157,32 @@ export default function EditSheet({
                   <label className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-wider block mb-2 flex items-center gap-1.5">
                     <Clock className="w-3 h-3" /> Entrada
                   </label>
-                  <select 
+                  <input
+                    type="time" 
                     value={entrada}
                     onChange={(e) => setEntrada(e.target.value)}
-                    className="w-full bg-transparent text-white text-3xl font-black outline-none border-none p-0 focus:ring-0 appearance-none cursor-pointer" 
-                  >
-                    {activeEntradaOptions.map(time => (
-                      <option key={time} value={time}>{time}</option>
-                    ))}
-                  </select>
+                    className="w-full bg-transparent text-white text-xl font-black outline-none border-none p-0 focus:ring-0 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full" 
+                  />
                 </div>
 
                 <div className="flex-1 bg-[#0A0A0A] p-4 rounded-3xl border border-[#2C2C2E] flex flex-col relative group">
-                  <label className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-wider block mb-2 flex items-center gap-1.5">
-                    <Clock className="w-3 h-3" /> Salida
-                  </label>
-                  <select 
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <Clock className="w-3 h-3" /> Salida
+                    </label>
+                    <button 
+                      onClick={() => setNextDay(!nextDay)}
+                      className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-colors ${nextDay ? 'bg-[#BF5AF2] text-white' : 'bg-[#2C2C2E] text-[#8E8E93]'}`}
+                    >
+                      +1 Día
+                    </button>
+                  </div>
+                  <input 
+                    type="time"
                     value={salida}
                     onChange={(e) => setSalida(e.target.value)}
-                    className="w-full bg-transparent text-white text-3xl font-black outline-none border-none p-0 focus:ring-0 appearance-none cursor-pointer" 
-                  >
-                    {activeSalidaOptions.map(time => (
-                      <option key={time} value={time}>{time}</option>
-                    ))}
-                  </select>
+                    className="w-full bg-transparent text-white text-xl font-black outline-none border-none p-0 focus:ring-0 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full" 
+                  />
                 </div>
               </div>
 
@@ -219,41 +236,42 @@ export default function EditSheet({
               {/* Live Preview Card */}
               <div className="bg-[#0A0A0A] rounded-3xl p-6 border border-[#2C2C2E]">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#8E8E93] text-sm font-bold uppercase tracking-widest">Base</span>
-                    <span className="font-mono text-white text-lg font-black">{(festivo || isWeekend) ? 0 : config.jornadaDiariaObjetivo.toFixed(2)}<span className="text-sm font-normal text-[#8E8E93] ml-0.5">h</span></span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#8E8E93] text-sm font-bold uppercase tracking-widest">Trabajadas</span>
-                    <span className="font-mono text-white text-lg font-black">{previewCalc.total.toFixed(2)}<span className="text-sm font-normal text-[#8E8E93] ml-0.5">h</span></span>
-                  </div>
+                  
                   
                   {(previewCalc.extDiur > 0 || previewCalc.extNoct > 0 || previewCalc.festivas > 0 || previewCalc.deber > 0) && (
                     <div className="h-px bg-[#2C2C2E] w-full my-4"></div>
                   )}
 
+                  {previewCalc.total > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-[#30D158] text-sm font-bold uppercase tracking-widest">Laborables</span>
+                      <span className="font-mono text-[#30D158] text-lg font-black">
+                        {formatHours(previewCalc.total - previewCalc.extDiur - previewCalc.extNoct - previewCalc.festivas)}
+                      </span>
+                    </div>
+                  )}
                   {previewCalc.extDiur > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-[#0A84FF] text-sm font-bold uppercase tracking-widest">Ext. Diurna</span>
-                      <span className="font-mono text-[#0A84FF] text-lg font-black">+{previewCalc.extDiur.toFixed(2)}<span className="text-sm font-normal opacity-70 ml-0.5">h</span></span>
+                      <span className="text-[#0A84FF] text-sm font-bold uppercase tracking-widest">Extra Laborable</span>
+                      <span className="font-mono text-[#0A84FF] text-lg font-black">+{formatHours(previewCalc.extDiur)}</span>
                     </div>
                   )}
                   {previewCalc.extNoct > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-[#BF5AF2] text-sm font-bold uppercase tracking-widest">Nocturnas</span>
-                      <span className="font-mono text-[#BF5AF2] text-lg font-black">+{previewCalc.extNoct.toFixed(2)}<span className="text-sm font-normal opacity-70 ml-0.5">h</span></span>
+                      <span className="text-[#BF5AF2] text-sm font-bold uppercase tracking-widest">Extra Nocturna</span>
+                      <span className="font-mono text-[#BF5AF2] text-lg font-black">+{formatHours(previewCalc.extNoct)}</span>
                     </div>
                   )}
                   {previewCalc.festivas > 0 && (
                     <div className="flex justify-between items-center">
                       <span className="text-[#FF9F0A] text-sm font-bold uppercase tracking-widest">Festivas</span>
-                      <span className="font-mono text-[#FF9F0A] text-lg font-black">+{previewCalc.festivas.toFixed(2)}<span className="text-sm font-normal opacity-70 ml-0.5">h</span></span>
+                      <span className="font-mono text-[#FF9F0A] text-lg font-black">+{formatHours(previewCalc.festivas)}</span>
                     </div>
                   )}
                   {previewCalc.deber > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-[#FF453A] text-sm font-bold uppercase tracking-widest">Falta</span>
-                      <span className="font-mono text-[#FF453A] text-lg font-black">-{previewCalc.deber.toFixed(2)}<span className="text-sm font-normal opacity-70 ml-0.5">h</span></span>
+                      <span className="text-[#FF453A] text-sm font-bold uppercase tracking-widest">Restada</span>
+                      <span className="font-mono text-[#FF453A] text-lg font-black">-{formatHours(previewCalc.deber)}</span>
                     </div>
                   )}
                 </div>

@@ -35,6 +35,49 @@ export function isNighttimeMinute(minOfDay: number, config: WorkConfig): boolean
   }
 }
 
+
+
+export function isInsideSchedule(minOfDay: number, config: WorkConfig): boolean {
+  const schedE1 = parseTimeToMinutes(config.horario.entradaDefault);
+  const schedS1 = parseTimeToMinutes(config.horario.salidaDefault);
+  
+  let inside1 = false;
+  if (schedE1 !== schedS1) {
+    if (schedE1 > schedS1) {
+      inside1 = minOfDay >= schedE1 || minOfDay < schedS1;
+    } else {
+      inside1 = minOfDay >= schedE1 && minOfDay < schedS1;
+    }
+  }
+
+  let inside2 = false;
+  if (config.horario.entrada2Default && config.horario.salida2Default) {
+    const schedE2 = parseTimeToMinutes(config.horario.entrada2Default);
+    const schedS2 = parseTimeToMinutes(config.horario.salida2Default);
+    if (schedE2 !== schedS2) {
+      if (schedE2 > schedS2) {
+        inside2 = minOfDay >= schedE2 || minOfDay < schedS2;
+      } else {
+        inside2 = minOfDay >= schedE2 && minOfDay < schedS2;
+      }
+    }
+  }
+
+  return inside1 || inside2;
+}
+
+export function formatHours(decimalHours: number): string {
+  const isNegative = decimalHours < 0;
+  const absHours = Math.abs(decimalHours);
+  const h = Math.floor(absHours);
+  const m = Math.round((absHours - h) * 60);
+  
+  if (m === 60) {
+    return `${isNegative ? '-' : ''}${String(h + 1).padStart(2, '0')}:00h`;
+  }
+  return `${isNegative ? '-' : ''}${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}h`;
+}
+
 const round2 = (num: number) => Math.round(num * 100) / 100;
 
 export function calculateDayShift(
@@ -65,52 +108,67 @@ export function calculateDayShift(
   const e = parseTimeToMinutes(shift.entrada);
   let s = parseTimeToMinutes(shift.salida);
   
-  if (s < e) {
+  if (shift.nextDay || s < e) {
     s += 1440;
   }
 
-  let rawNightMins = 0;
-  let rawDayMins = 0;
+  
+  
+  let rawNormalMins = 0;
+  let rawExtraDayMins = 0;
+  let rawExtraNightMins = 0;
 
-  for (let m = e; m < s; m++) {
-    const minOfDay = m % 1440;
-    if (isNighttimeMinute(minOfDay, config)) {
-      rawNightMins++;
-    } else {
-      rawDayMins++;
+  function processSegment(startMins: number, endMins: number) {
+    for (let m = startMins; m < endMins; m++) {
+      const minOfDay = m % 1440;
+      if (isInsideSchedule(minOfDay, config)) {
+        rawNormalMins++;
+      } else if (isNighttimeMinute(minOfDay, config)) {
+        rawExtraNightMins++;
+      } else {
+        rawExtraDayMins++;
+      }
     }
+  }
+
+  processSegment(e, s);
+
+  if (shift.entrada2 && shift.salida2) {
+    const e2 = parseTimeToMinutes(shift.entrada2);
+    let s2 = parseTimeToMinutes(shift.salida2);
+    if (s2 < e2 || (shift.nextDay && s2 < e2)) {
+      s2 += 1440;
+    }
+    processSegment(e2, s2);
   }
 
   let descansoMins = 0;
   if (shift.descanso !== undefined && shift.descanso > 0) {
     descansoMins = Math.round(shift.descanso * 60);
-  } else {
-    let coversBreak = false;
-    for (let m = e; m < s; m++) {
-      const minOfDay = m % 1440;
-      if (minOfDay === 870) { 
-        coversBreak = true;
-        break;
-      }
-    }
-    
-    if (coversBreak) {
-      descansoMins = Math.round(config.horario.descansoDefault * 60);
-    }
   }
 
-  let effDayMins = rawDayMins;
-  let effNightMins = rawNightMins;
+  let effNormalMins = rawNormalMins;
+  let effExtraDayMins = rawExtraDayMins;
+  let effExtraNightMins = rawExtraNightMins;
   let remainingBreak = descansoMins;
 
-  const subDay = Math.min(effDayMins, remainingBreak);
-  effDayMins -= subDay;
-  remainingBreak -= subDay;
+  const subNormal = Math.min(effNormalMins, remainingBreak);
+  effNormalMins -= subNormal;
+  remainingBreak -= subNormal;
+
   if (remainingBreak > 0) {
-    effNightMins = Math.max(0, effNightMins - remainingBreak);
+    const subExtraDay = Math.min(effExtraDayMins, remainingBreak);
+    effExtraDayMins -= subExtraDay;
+    remainingBreak -= subExtraDay;
   }
 
-  const totalEffectiveHours = (effDayMins + effNightMins) / 60;
+  if (remainingBreak > 0) {
+    const subExtraNight = Math.min(effExtraNightMins, remainingBreak);
+    effExtraNightMins -= subExtraNight;
+    remainingBreak -= subExtraNight;
+  }
+
+  const totalEffectiveHours = (effNormalMins + effExtraDayMins + effExtraNightMins) / 60;
   result.total = round2(totalEffectiveHours);
 
   const baseObjetivo = festivo ? 0 : config.jornadaDiariaObjetivo;
@@ -123,48 +181,40 @@ export function calculateDayShift(
       result.bolsa = round2(totalEffectiveHours * config.bolsa.multiplicador);
     }
   } else {
-    let extraDayMins = 0;
-    let extraNightMins = 0;
-    
-    if (totalEffectiveHours > baseObjetivo) {
-      const extraMins = Math.round((totalEffectiveHours - baseObjetivo) * 60);
-      let collected = 0;
-      // Recorrer hacia atrás desde la salida para ver si las extras caen en noche o día
-      for (let m = s - 1; m >= e && collected < extraMins; m--) {
-        const minOfDay = (m % 1440 + 1440) % 1440;
-        if (isNighttimeMinute(minOfDay, config)) {
-          extraNightMins++;
-        } else {
-          extraDayMins++;
-        }
-        collected++;
-      }
+    let normalHours = effNormalMins / 60;
+    let extDiur = effExtraDayMins / 60;
+    let extNoct = effExtraNightMins / 60;
+
+    if (normalHours > baseObjetivo) {
+      const overflow = normalHours - baseObjetivo;
+      extDiur += overflow;
+      normalHours = baseObjetivo;
     }
-    
-    result.extNoct = round2(extraNightMins / 60);
-    result.extDiur = round2(extraDayMins / 60);
-    
+
+    result.extDiur = round2(extDiur);
+    result.extNoct = round2(extNoct);
+    result.deber = round2(baseObjetivo - normalHours);
+
     if (shift.opcion === 'Cobrar') {
       result.dinero = round2((result.extDiur * config.tarifas.diurna) + (result.extNoct * config.tarifas.nocturna));
     } else {
       result.bolsa = round2((result.extDiur * 1) + (result.extNoct * config.bolsa.multiplicador));
     }
-  }
-  
-  if (totalEffectiveHours < baseObjetivo) {
-    result.deber = round2(baseObjetivo - totalEffectiveHours);
-  } else {
-    result.deber = 0;
+    
+    result.bolsa = round2(result.bolsa - result.deber);
   }
 
   return result;
+
+
 }
 
 export const DEFAULT_CONFIG: WorkConfig = {
   horario: {
     entradaDefault: "09:00",
-    salidaDefault: "18:00",
-    descansoDefault: 1.0,
+    salidaDefault: "14:00",
+    entrada2Default: "15:00",
+    salida2Default: "18:00",
   },
   semanaHorasObjetivo: 40,
   jornadaDiariaObjetivo: 8,

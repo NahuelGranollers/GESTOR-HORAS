@@ -6,8 +6,9 @@
 export interface WorkConfig {
   horario: {
     entradaDefault: string;   // e.g., "09:00"
-    salidaDefault: string;    // e.g., "18:00"
-    descansoDefault: number;  // e.g., 1.0 (hour)
+    salidaDefault: string;    // e.g., "14:00"
+    entrada2Default: string;  // e.g., "15:00"
+    salida2Default: string;   // e.g., "18:00"
   };
   semanaHorasObjetivo: number;  // e.g., 40
   jornadaDiariaObjetivo: number; // e.g., 8
@@ -28,10 +29,14 @@ export interface WorkConfig {
 export interface DayShift {
   entrada: string;  // "HH:MM" or ""
   salida: string;   // "HH:MM" or ""
-  descanso: number; // in hours
+  entrada2?: string;
+  salida2?: string;
+  nextDay?: boolean; // If true, salida is on the next day
+  descanso: number; // in hours (kept for legacy or single-shift with break)
   ausencia: number; // in hours (hours of justified absence like doctor, etc.)
   festivo: boolean;
   opcion: 'Bolsa' | 'Cobrar';
+  notas?: string;
 }
 
 export interface DayCalculation {

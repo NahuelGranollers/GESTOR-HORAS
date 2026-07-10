@@ -7,6 +7,8 @@ import React, { useState } from 'react';
 import { MonthData, MonthCalculations, WorkConfig } from '../types';
 import { Award, BarChart3, TrendingUp, Calendar, Moon, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
+import { formatHours } from '../utils/calculator';
 
 interface StatsViewProps {
   year: number;
@@ -39,6 +41,8 @@ export default function StatsView({
   let totalDeber = 0;
   let workingDaysCount = 0;
 
+  const chartData = [];
+
   for (let i = 1; i <= daysInMonth; i++) {
     const shift = monthData[i];
     const calc = monthCalculations[i];
@@ -62,6 +66,12 @@ export default function StatsView({
       totalDinero += calc.dinero;
       totalDeber += calc.deber;
     }
+
+    chartData.push({
+      dia: i.toString(),
+      trabajadas: calc ? calc.total : 0,
+      objetivo: isFest ? 0 : config.jornadaDiariaObjetivo,
+    });
   }
 
   const averageHours = totalDíasTrabajados > 0 ? totalWorkedHours / totalDíasTrabajados : 0;
@@ -97,12 +107,34 @@ export default function StatsView({
         </h3>
       </div>
 
+      {/* Evolution Chart */}
+      <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-3xl p-6">
+        <h4 className="text-xs font-bold text-[#8E8E93] uppercase tracking-widest mb-6">Evolución Diaria (Horas)</h4>
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <XAxis dataKey="dia" tick={{ fill: '#8E8E93', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#8E8E93', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1C1C1E', border: '1px solid #2C2C2E', borderRadius: '12px', color: '#fff' }}
+                itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+                labelStyle={{ color: '#8E8E93', fontSize: '10px', textTransform: 'uppercase', marginBottom: '4px' }}
+                formatter={(value: number) => [formatHours(value), '']}
+              />
+              <Legend wrapperStyle={{ fontSize: '10px', color: '#8E8E93' }} />
+              <Bar dataKey="objetivo" name="Objetivo" fill="#2C2C2E" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="trabajadas" name="Trabajadas" fill="#0A84FF" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* Progress Bars */}
       <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-3xl p-6 space-y-6">
         <div>
           <div className="flex justify-between items-end mb-2">
             <span className="text-xs font-bold text-[#8E8E93] uppercase tracking-widest">Semana Actual</span>
-            <span className="text-xl font-bold text-white">{weekWorkedHours.toFixed(1)}h <span className="text-sm text-[#8E8E93]">/ {targetSemana}h</span></span>
+            <span className="text-xl font-bold text-white">{formatHours(weekWorkedHours)} <span className="text-sm text-[#8E8E93]">/ {targetSemana}h</span></span>
           </div>
           <div className="h-4 bg-[#2C2C2E] rounded-full overflow-hidden">
             <motion.div 
@@ -117,7 +149,7 @@ export default function StatsView({
         <div>
           <div className="flex justify-between items-end mb-2">
             <span className="text-xs font-bold text-[#8E8E93] uppercase tracking-widest">Mes Completo</span>
-            <span className="text-xl font-bold text-white">{totalWorkedHours.toFixed(1)}h <span className="text-sm text-[#8E8E93]">/ {targetMes}h</span></span>
+            <span className="text-xl font-bold text-white">{formatHours(totalWorkedHours)} <span className="text-sm text-[#8E8E93]">/ {targetMes}h</span></span>
           </div>
           <div className="h-4 bg-[#2C2C2E] rounded-full overflow-hidden">
             <motion.div 
@@ -134,7 +166,7 @@ export default function StatsView({
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-3xl p-6 flex flex-col items-center text-center">
           <span className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-widest block mb-1">Bolsa Generada</span>
-          <span className="text-3xl font-black text-[#0A84FF]">+{totalBolsa.toFixed(1)}h</span>
+          <span className="text-3xl font-black text-[#0A84FF]">+{formatHours(totalBolsa)}</span>
         </div>
         <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-3xl p-6 flex flex-col items-center text-center">
           <span className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-widest block mb-1">Extra Cobrado</span>
@@ -151,7 +183,7 @@ export default function StatsView({
           </div>
           <div>
             <span className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-widest block">Media Diaria</span>
-            <span className="text-lg font-bold text-white mt-0.5">{averageHours.toFixed(2)}h</span>
+            <span className="text-lg font-bold text-white mt-0.5">{formatHours(averageHours)}</span>
           </div>
         </div>
 
@@ -173,7 +205,7 @@ export default function StatsView({
           </div>
           <div>
             <span className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-widest block">Nocturnas</span>
-            <span className="text-lg font-bold text-purple-400 mt-0.5">{totalNightHours.toFixed(1)}h</span>
+            <span className="text-lg font-bold text-purple-400 mt-0.5">{formatHours(totalNightHours)}</span>
           </div>
         </div>
       </div>

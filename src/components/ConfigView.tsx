@@ -21,8 +21,10 @@ export default function ConfigView({
 }: ConfigViewProps) {
   // Local states
   const [entradaDefault, setEntradaDefault] = useState('09:00');
-  const [salidaDefault, setSalidaDefault] = useState('18:00');
-  const [descansoDefault, setDescansoDefault] = useState(1.0);
+  const [salidaDefault, setSalidaDefault] = useState('14:00');
+  const [entrada2Default, setEntrada2Default] = useState('15:00');
+  const [salida2Default, setSalida2Default] = useState('18:00');
+  
   const [jornadaDiaria, setJornadaDiaria] = useState(8.0);
   const [semanaHoras, setSemanaHoras] = useState(40.0);
   const [nocturnaInicio, setNocturnaInicio] = useState('22:00');
@@ -38,7 +40,9 @@ export default function ConfigView({
   useEffect(() => {
     setEntradaDefault(config.horario.entradaDefault);
     setSalidaDefault(config.horario.salidaDefault);
-    setDescansoDefault(config.horario.descansoDefault);
+    setEntrada2Default(config.horario.entrada2Default || '');
+    setSalida2Default(config.horario.salida2Default || '');
+    
     setJornadaDiaria(config.jornadaDiariaObjetivo);
     setSemanaHoras(config.semanaHorasObjetivo);
     setNocturnaInicio(config.nocturna.inicio);
@@ -55,7 +59,8 @@ export default function ConfigView({
       horario: {
         entradaDefault,
         salidaDefault,
-        descansoDefault,
+        entrada2Default,
+        salida2Default,
       },
       jornadaDiariaObjetivo: jornadaDiaria,
       semanaHorasObjetivo: semanaHoras,
@@ -86,6 +91,14 @@ export default function ConfigView({
     }
   };
 
+  
+  const handleHardReset = () => {
+    if (confirm('ATENCIÓN: Se borrarán TODOS los datos de la aplicación y se restablecerá la caché. ¿Estás seguro?')) {
+      localStorage.clear();
+      window.location.reload();
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Title */}
@@ -95,14 +108,24 @@ export default function ConfigView({
           <h3 className="text-lg font-bold text-white">Configuración del Convenio</h3>
         </div>
         
-        <button
-          type="button"
-          onClick={handleReset}
-          className="flex items-center gap-1.5 text-xs text-[#FF453A] hover:bg-[#FF453A]/10 border border-[#FF453A]/20 rounded-xl px-3 py-1.5 transition-colors font-semibold"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Restaurar
-        </button>
+        
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="flex items-center gap-1.5 text-[10px] text-[#FF453A] hover:bg-[#FF453A]/10 border border-[#FF453A]/20 rounded-xl px-2 py-1.5 transition-colors font-semibold"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Restaurar
+          </button>
+          <button
+            type="button"
+            onClick={handleHardReset}
+            className="flex items-center gap-1.5 text-[10px] text-white bg-[#FF453A] hover:bg-[#FF453A]/80 shadow-lg shadow-[#FF453A]/20 rounded-xl px-2 py-1.5 transition-colors font-bold"
+          >
+            Refrescar Caché
+          </button>
+        </div>
       </div>
 
       {saveSuccess && (
@@ -125,36 +148,25 @@ export default function ConfigView({
           </h4>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-[#8E8E93] uppercase">Entrada</label>
+              <label className="text-xs font-bold text-[#8E8E93] uppercase">Entrada 2</label>
               <input
                 type="time"
-                value={entradaDefault}
-                onChange={(e) => setEntradaDefault(e.target.value)}
+                value={entrada2Default}
+                onChange={(e) => setEntrada2Default(e.target.value)}
                 className="bg-[#2C2C2E] border-none rounded-xl p-4 text-base font-bold text-white outline-none focus:ring-2 focus:ring-[#FF9F0A] transition-all"
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-[#8E8E93] uppercase">Salida</label>
+              <label className="text-xs font-bold text-[#8E8E93] uppercase">Salida 2</label>
               <input
                 type="time"
-                value={salidaDefault}
-                onChange={(e) => setSalidaDefault(e.target.value)}
+                value={salida2Default}
+                onChange={(e) => setSalida2Default(e.target.value)}
                 className="bg-[#2C2C2E] border-none rounded-xl p-4 text-base font-bold text-white outline-none focus:ring-2 focus:ring-[#FF9F0A] transition-all"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-[#8E8E93] uppercase">Descanso (h)</label>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                value={descansoDefault}
-                onChange={(e) => setDescansoDefault(parseFloat(e.target.value) || 0)}
-                className="bg-[#2C2C2E] border-none rounded-xl p-4 text-base font-bold text-white outline-none focus:ring-2 focus:ring-[#FF9F0A] transition-all"
-              />
-            </div>
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold text-[#8E8E93] uppercase">Objetivo Día (h)</label>
               <input
